@@ -1,0 +1,36 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{3A61027F-58F5-455D-A2C0-EE7DC3B42602}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="VideoPlayer.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="VideoPlayer">
+        <MSBuild Projects="VideoPlayer.dproj"/>
+    </Target>
+    <Target Name="VideoPlayer:Clean">
+        <MSBuild Projects="VideoPlayer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="VideoPlayer:Make">
+        <MSBuild Projects="VideoPlayer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="VideoPlayer"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="VideoPlayer:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="VideoPlayer:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
