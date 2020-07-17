@@ -1,0 +1,60 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{E0384B0E-534B-4D8C-B28D-8FEB3B59964A}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="VideoPlayer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="C:\Users\hemulgm\Desktop\MediaExtractor\MediaExtractor.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="..\..\DllExports\DllExport.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="VideoPlayer">
+        <MSBuild Projects="VideoPlayer.dproj"/>
+    </Target>
+    <Target Name="VideoPlayer:Clean">
+        <MSBuild Projects="VideoPlayer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="VideoPlayer:Make">
+        <MSBuild Projects="VideoPlayer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MediaExtractor">
+        <MSBuild Projects="C:\Users\hemulgm\Desktop\MediaExtractor\MediaExtractor.dproj"/>
+    </Target>
+    <Target Name="MediaExtractor:Clean">
+        <MSBuild Projects="C:\Users\hemulgm\Desktop\MediaExtractor\MediaExtractor.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MediaExtractor:Make">
+        <MSBuild Projects="C:\Users\hemulgm\Desktop\MediaExtractor\MediaExtractor.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DllExport">
+        <MSBuild Projects="..\..\DllExports\DllExport.dproj"/>
+    </Target>
+    <Target Name="DllExport:Clean">
+        <MSBuild Projects="..\..\DllExports\DllExport.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DllExport:Make">
+        <MSBuild Projects="..\..\DllExports\DllExport.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="VideoPlayer;MediaExtractor;DllExport"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="VideoPlayer:Clean;MediaExtractor:Clean;DllExport:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="VideoPlayer:Make;MediaExtractor:Make;DllExport:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

@@ -3,10 +3,11 @@ unit VideoPlayer.Main;
 interface
 
 uses
-  Winapi.Windows, System.SysUtils, System.Types, System.Generics.Collections, System.UITypes, System.Classes,
-  System.Variants, FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.Objects, FmxPasLibVlcPlayerUnit,
-  FMX.Layouts, FMX.ListView.Types, FMX.ListView.Appearances, FMX.ListView.Adapters.Base, FMX.Controls.Presentation,
-  FMX.StdCtrls, FMX.ListView, System.IOUtils, FMX.Ani, FMX.Effects, FMX.ScrollBox, FMX.Memo;
+  Winapi.Windows, System.SysUtils, System.Types, System.Generics.Collections, System.UITypes, System.Classes, System.Variants, FMX.Types,
+  FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.Objects, FmxPasLibVlcPlayerUnit, FMX.Layouts,
+  FMX.ListView.Types, FMX.ListView.Appearances, FMX.ListView.Adapters.Base, FMX.Controls.Presentation, FMX.StdCtrls,
+  FMX.ListView, System.IOUtils, FMX.Ani, FMX.Effects, FMX.ScrollBox, FMX.Memo,
+  Radiant.Shapes;
 
 type
   TArrayOfString = TArray<string>;
@@ -41,6 +42,8 @@ type
     LabelTimeLeft: TLabel;
     LabelTimeRight: TLabel;
     TimerClick: TTimer;
+    RadiantGear1: TRadiantGear;
+    FloatAnimation1: TFloatAnimation;
     procedure FormCreate(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure ListViewFilesItemClick(const Sender: TObject; const AItem: TListViewItem);
@@ -84,11 +87,13 @@ type
 var
   FormMain: TFormMain;
   AllowExts: TArrayOfString = ['.mp4', '.avi', '.flv', '.ts', '.mkv'];
+  PathCache: string;
+  PathHome: string;
 
 implementation
 
 uses
-  System.DateUtils;
+  System.DateUtils, VideoPlayer.MediaInfo;
 
 {$R *.fmx}
 
@@ -96,13 +101,33 @@ function MsToTimeStr(Value: Int64): string;
 var
   H, M, S: Integer;
 begin
-  Value := Value div MSecsPerSec;
-  H := Value div SecsPerHour;
-  Value := Value - (H * SecsPerHour);
-  M := Value div SecsPerMin;
-  Value := Value - (M * SecsPerMin);
-  S := Value;
-  Result := Format('%.2d:%.2d:%.2d', [H, M, S]);
+  try
+    Value := Value div MSecsPerSec;
+    H := Value div SecsPerHour;
+    Value := Value - (H * SecsPerHour);
+    M := Value div SecsPerMin;
+    Value := Value - (M * SecsPerMin);
+    S := Value;
+    Result := Format('%.2d:%.2d:%.2d', [H, M, S]);
+  except
+    Result := '';
+  end;
+end;
+
+function SecToTimeStr(Value: Int64): string;
+var
+  H, M, S: Integer;
+begin
+  try
+    H := Value div SecsPerHour;
+    Value := Value - (H * SecsPerHour);
+    M := Value div SecsPerMin;
+    Value := Value - (M * SecsPerMin);
+    S := Value;
+    Result := Format('%.2d:%.2d:%.2d', [H, M, S]);
+  except
+    Result := '';
+  end;
 end;
 
 function ExecuteProcess(const FileName, Params: string; Folder: string; WaitUntilTerminated, WaitUntilIdle, RunMinimized:
@@ -147,15 +172,35 @@ begin
   end;
 end;
 
+function GetVideoDuration(VideoFile: string; var Duration: string): Boolean;
+var
+  MediaMeta: TMediaMeta;
+  idx: int32;
+begin
+  Result := False;
+  MediaMeta := TMediaMeta.Create(ExtractFilePath(VideoFile), ExtractFileName(VideoFile));
+  try
+    if MediaMeta.VideoTrackCount > 0 then
+    begin
+      Duration := SecToTimeStr(MediaMeta.VideoTrackInfo[0].Duration);
+      Result := not Duration.IsEmpty;
+    end;
+  finally
+    MediaMeta.Free;
+  end;
+end;
+
 function GetThumbnail(VideoFile: string; var ThumbFile: string): Boolean;
 var
   ErrorCode: Integer;
 begin
-  ThumbFile := 'cache/' + ExtractFileName(VideoFile) + '.png';
+  if not TDirectory.Exists(PathCache) then
+    TDirectory.CreateDirectory(PathCache);
+  ThumbFile := IncludeTrailingPathDelimiter(PathCache) + ExtractFileName(VideoFile) + '.png';
   if not FileExists(ThumbFile) then
   begin
     Result := ExecuteProcess('ffmpeg', '-i "' + VideoFile + '" -ss 00:00:05.000 -vframes 1 "' + ThumbFile + '"',
-      ExtractFilePath(ParamStr(0)), True, True, True, ErrorCode) and FileExists(ThumbFile);
+      TPath.GetLibraryPath, True, True, True, ErrorCode) and FileExists(ThumbFile);
   end
   else
     Result := True;
@@ -223,6 +268,8 @@ var
   FileName: string;
   Files: TArrayOfString;
 begin
+  if not TDirectory.Exists(Dir) then
+    Exit;
   Files := TDirectory.GetFiles(Dir, TSearchOption.soTopDirectoryOnly,
     function(const Path: string; const SearchRec: TSearchRec): Boolean
     begin
@@ -251,6 +298,10 @@ begin
       for i := 0 to ListViewFiles.Items.Count - 1 do
       begin
         FN := ListViewFiles.Items[i].Data['Path'].AsString;
+        if GetVideoDuration(FN, S) then
+        begin
+          ListViewFiles.Items[i].Detail := S;
+        end;
         if GetThumbnail(FN, S) then
         begin
           BMP := TBitmap.Create;
@@ -273,7 +324,7 @@ end;
 procedure TFormMain.FormCreate(Sender: TObject);
 begin
   FDblClick := False;
-  FillDirectory('D:\Мультимедиа\Видео');
+  FillDirectory('D:\Мультимедиа\Видео1');
 end;
 
 function TFormMain.GetVideoFullScreen: Boolean;
@@ -438,6 +489,10 @@ begin
     if Self[i] = Value then
       Exit(True);
 end;
+
+initialization
+  PathHome := IncludeTrailingPathDelimiter(TPath.GetHomePath) + 'VideoPlayer';
+  PathCache := IncludeTrailingPathDelimiter(PathHome) + 'cache';
 
 end.
 
